@@ -62,12 +62,21 @@ export class DocumentEditComponent implements OnInit {
   }
 
   async save() {
-    if (!this.doc.id) return;
-    
-    await this.storageService.documents.update(this.doc.id, {
-      name: this.editedName,
-      folderId: this.selectedFolderId
-    });
+    if (!this.doc.id) {
+      // New Document: Create it
+      const newDoc: DocXDocument = {
+        ...this.doc,
+        name: this.editedName,
+        folderId: this.selectedFolderId
+      };
+      await this.storageService.addDocument(newDoc);
+    } else {
+      // Existing Document: Update it
+      await this.storageService.documents.update(this.doc.id, {
+        name: this.editedName,
+        folderId: this.selectedFolderId
+      });
+    }
     
     this.storageService.refresh$.next(); // Trigger refresh
     this.saved.emit();
@@ -84,7 +93,12 @@ export class DocumentEditComponent implements OnInit {
   };
 
   async delete() {
-    if (!this.doc.id) return;
+    if (!this.doc.id) {
+       // New Document: Just cancel/discard
+       this.close.emit();
+       return;
+    }
+
     this.confirmModalConfig = {
       title: 'Delete Document',
       message: `Are you sure you want to delete "${this.doc.name}"?`,

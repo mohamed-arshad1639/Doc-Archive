@@ -2,6 +2,8 @@ import { Component, inject, ViewChild, ElementRef } from '@angular/core';
 import { FileHandlingService } from '../../services/file-handling.service';
 import { SearchService } from '../../services/search.service';
 import { AsyncPipe } from '@angular/common';
+import { DocumentEditComponent } from '../../../shared/components/document-edit/document-edit.component';
+import { DocXDocument } from '../../models/document.model';
 
 @Component({
     selector: 'app-nav-menu',
@@ -38,14 +40,24 @@ import { AsyncPipe } from '@angular/common';
     </div>
     
     <input #fileInput type="file" multiple accept="image/*" class="hidden" (change)="onFileSelected($event)">
+
+    @if (pendingDocs.length > 0) {
+      <app-document-edit 
+        [doc]="pendingDocs[0]" 
+        (close)="removePendingDoc()" 
+        (saved)="removePendingDoc()">
+      </app-document-edit>
+    }
   `,
     standalone: true,
-    imports: [AsyncPipe]
+    imports: [AsyncPipe, DocumentEditComponent]
 })
 export class NavMenuComponent {
   private fileService = inject(FileHandlingService);
   public searchService = inject(SearchService);
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  
+  pendingDocs: DocXDocument[] = [];
 
   setViewMode(mode: 'grid' | 'list') {
     this.searchService.setViewMode(mode);
@@ -59,8 +71,15 @@ export class NavMenuComponent {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       console.log('Files selected:', input.files.length);
-      await this.fileService.processFiles(input.files);
+      // Prepare files but do NOT save yet
+      const docs = await this.fileService.prepareFiles(input.files);
+      this.pendingDocs.push(...docs);
+      
       input.value = ''; // Reset input
     }
+  }
+
+  removePendingDoc() {
+    this.pendingDocs.shift(); // Process next document
   }
 }
