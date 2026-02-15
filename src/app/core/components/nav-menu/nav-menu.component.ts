@@ -1,6 +1,7 @@
 import { Component, inject, ViewChild, ElementRef } from '@angular/core';
 import { FileHandlingService } from '../../services/file-handling.service';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { SearchService } from '../../services/search.service';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
     selector: 'app-nav-menu',
@@ -9,15 +10,21 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       
 
 
-      <a routerLink="/grid" routerLinkActive="text-blue-400 font-bold" class="flex flex-col items-center gap-1 transition-colors hover:text-white/80">
+      <button (click)="setViewMode('grid')" 
+              [class.text-blue-400]="(searchService.criteria$ | async)?.viewMode === 'grid'"
+              [class.font-bold]="(searchService.criteria$ | async)?.viewMode === 'grid'"
+              class="flex flex-col items-center gap-1 transition-colors hover:text-white/80">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
          <span class="text-[10px] uppercase tracking-wider">Grid</span>
-      </a>
+      </button>
 
-      <a routerLink="/list" routerLinkActive="text-blue-400 font-bold" class="flex flex-col items-center gap-1 transition-colors hover:text-white/80">
+      <button (click)="setViewMode('list')" 
+              [class.text-blue-400]="(searchService.criteria$ | async)?.viewMode === 'list'"
+              [class.font-bold]="(searchService.criteria$ | async)?.viewMode === 'list'"
+              class="flex flex-col items-center gap-1 transition-colors hover:text-white/80">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
          <span class="text-[10px] uppercase tracking-wider">List</span>
-      </a>
+      </button>
 
 
 
@@ -33,11 +40,16 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
     <input #fileInput type="file" multiple accept="image/*" class="hidden" (change)="onFileSelected($event)">
   `,
     standalone: true,
-    imports: [RouterLink, RouterLinkActive]
+    imports: [AsyncPipe]
 })
 export class NavMenuComponent {
   private fileService = inject(FileHandlingService);
+  public searchService = inject(SearchService);
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+
+  setViewMode(mode: 'grid' | 'list') {
+    this.searchService.setViewMode(mode);
+  }
 
   triggerUpload() {
     this.fileInput.nativeElement.click();

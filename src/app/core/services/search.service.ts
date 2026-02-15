@@ -10,6 +10,7 @@ export interface SearchCriteria {
   filterType: FilterType;
   onlyFavorites: boolean;
   folderId?: number | null; // null for root, undefined for all? Or explicit IDs.
+  viewMode: 'grid' | 'list';
 }
 
 @Injectable({
@@ -22,7 +23,8 @@ export class SearchService {
     sortBy: 'date-desc',
     filterType: 'all',
     onlyFavorites: false,
-    folderId: null // Start with root (null)
+    folderId: null, // Start with root (null)
+    viewMode: (localStorage.getItem('viewMode') as 'grid' | 'list') || 'grid'
   });
 
   // Expose as read-only signal if needed, but here we expose the observable for compat
@@ -51,6 +53,11 @@ export class SearchService {
 
   selectFolder(folderId: number | null | undefined) {
     this.updateCriteria({ folderId });
+  }
+
+  setViewMode(mode: 'grid' | 'list') {
+    localStorage.setItem('viewMode', mode);
+    this.updateCriteria({ viewMode: mode });
   }
 
   private updateCriteria(changes: Partial<SearchCriteria>) {
